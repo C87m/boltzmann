@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import csv
+import pprint
 
 from sklearn.datasets import load_digits
 
@@ -16,20 +18,23 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
         if row == 1:
             img1 = np.reshape(img_list1[i], (8, 8))
             ax[i].imshow(img1, cmap='Greys')
-            ax[i].set_title(title_list1[i])
+            if i ==0:
+                ax[i].set_title("Original",y=-0.2)
+            else:
+                ax[i].set_title("Generated",y=-0.2)
         else:
             img1 = np.reshape(img_list1[i], (8, 8))
             ax[0, i].imshow(img1, cmap='Greys')
-            ax[0, i].set_title(title_list1[i])
+            ax[0, i].set_title("Generated",y=-0.2)
             
             img2 = np.reshape(img_list2[i], (8, 8))
             ax[1, i].imshow(img2, cmap='Greys')
             ax[1, i].set_title(title_list2[i])
-            
+     
     plt.show()
     
 # 0 のみのデータセットを取得
-zero_index_list = [i for i, x in enumerate(digits.target) if x == 0]
+zero_index_list = [i for i, x in enumerate(digits.target) if x == 9]
 raw_data_list = [digits.data[i] for i in zero_index_list]
 
 num_data = 50 # 使用するデータの数
@@ -84,9 +89,12 @@ class RBM:
 
             # エラーログ
             #100回のイテレーションごとに元のデータと再構成データとの誤差を計算して表示
-            if iteration % 100 == 0:
-                error = np.mean((data - neg_visible_probs) ** 2)
-                print(f"Iteration: {iteration}, Error: {error}")
+            #if (iteration+1) % 10 == 0 or iteration == 0:
+            error = np.mean((data - neg_visible_probs) ** 2)
+                # print(f"Iteration: {iteration}, Error: {error}")
+            with open('RBM1000_9.csv','a') as f:
+                writer = csv.writer(f)
+                writer.writerow([iteration+1,error])
 
     #可視層から隠れ層への変換
     #可視ユニットのデータを入力として、隠れユニットの状態をサンプリングして返す
@@ -117,18 +125,18 @@ rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=1000)
 rbm.train(data)
 
 # 再構成のテスト
-sample_data = np.array(data[1])
+sample_data = np.array(data[13])
 reconstructed_data = rbm.reconstruct(sample_data)
 
 redata = reconstructed_data[0]
 
-print("Original Data:", data[1])
+print("Original Data:", data[0])
 print("Reconstructed Data:", redata)
     
 list1 = []
 list2 = []
-list1.append(data[1])
+list1.append(data[13])
 list1.append(redata)
 show_img(row=1, col=2, img_list1=list1, img_list2=None,
-         title_list1="sample_reconstructed", title_list2=None,
-         subtitle="", subtitlesize=24, figsize=(14, 3))
+         title_list1=None, title_list2=None,
+         subtitle="", subtitlesize=24, figsize=(7, 3))

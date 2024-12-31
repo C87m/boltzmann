@@ -31,7 +31,7 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
     plt.show()
     
 # 0 のみのデータセットを取得
-zero_index_list = [i for i, x in enumerate(digits.target) if x == 4 ]
+zero_index_list = [i for i, x in enumerate(digits.target) if x == 0 or x == 1 ]
 raw_data_list = [digits.data[i] for i in zero_index_list]
 
 num_data = 50 # 使用するデータの数
@@ -137,7 +137,7 @@ class RBM:
 data = np.array(edit_data_list)
 
 # RBMの初期化とトレーニング
-rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=100)
+rbm = RBM(n_visible=64, n_hidden=64, learning_rate=0.1, n_iterations=100)
 rbm.train(data)
 
 # 再構成のテスト

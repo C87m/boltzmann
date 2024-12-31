@@ -1,5 +1,3 @@
-import openjij as oj
-from pyqubo import Array, Constraint, solve_qubo
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -34,7 +32,7 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
 zero_index_list = [i for i, x in enumerate(digits.target) ]
 raw_data_list = [digits.data[i] for i in zero_index_list]
 
-num_data = 500 # 使用するデータの数
+num_data = 100 # 使用するデータの数
 num_spin = len(raw_data_list[0]) #画像1枚のスピンの数
 
 # データの加工
@@ -58,59 +56,46 @@ class RBM:
         return 1 / (1 + np.exp(-x))
 
     def train(self, data):
-        #変数の作成
-        x = Array.create('x', shape=(self.n_visible+self.n_hidden), vartype='BINARY')
-        #期待値の初期化
-        pos_hidden_probs = self.sigmoid(np.dot(data, self.weights) + self.hidden_bias)
-        pos_associations = np.dot(data.T, pos_hidden_probs)
-        
+        vs = []
         for iteration in range(self.n_iterations):
-            #アニーリングの実行
-            #第一項
-            H_A = Constraint(- sum(self.visible_bias[i]*x[i] for i in range(self.n_visible)), label='HA')
-            #第二項
-            H_B = Constraint(- sum(self.hidden_bias[i]*x[i+self.n_visible] for i in range(self.n_hidden)), label='HB')
-            #代三項
-            H_C = - sum(sum(self.weights[i][j]*x[i]*x[j+self.n_visible] for i in range(self.n_visible))for j in range(self.n_hidden))
-            #ハミルトニアン全体を定義
-            Q = H_A + H_B + H_C
-            #モデルをコンパイル
-            model = Q.compile()
-            qubo, offset = model.to_qubo()
-            #SQAを用いる
-            sampler = oj.SQASampler()
-            #QUBOにquboを代入
-            response = sampler.sample_qubo(Q=qubo)
-            #サンプリング結果を代入
-            v = response.states[0][0:self.n_visible]
-            h = response.states[0][self.n_visible:]
-            
             # 正のフェーズ
             #可視データから隠れユニットの活性化確率を計算
             pos_hidden_probs = self.sigmoid(np.dot(data, self.weights) + self.hidden_bias)
+            #活性化確率を使って隠れユニットの状態をサンプリング
+            pos_hidden_states = (pos_hidden_probs > np.random.rand(len(data), self.n_hidden)).astype(float)
             #可視ユニットと隠れユニットの共起を計算
             pos_associations = np.dot(data.T, pos_hidden_probs)
 
             # 負のフェーズ
             #隠れユニットの状態から再構成された可視データの確率を計算
-            neg_visible_probs = self.sigmoid(np.dot(h, self.weights.T) + self.visible_bias)
+            neg_visible_probs = self.sigmoid(np.dot(pos_hidden_states, self.weights.T) + self.visible_bias)
+            #バイナリ状態に変換
+            neg_visible_probs = (neg_visible_probs > np.random.rand(len(data), self.n_visible)).astype(float)
             #再構成された可視データから隠れユニットの活性化確率を計算
-            neg_hidden_probs = self.sigmoid(np.dot(v, self.weights) + self.hidden_bias)
+            neg_hidden_probs = self.sigmoid(np.dot(neg_visible_probs, self.weights) + self.hidden_bias)
 
             # 重みとバイアスの更新
             #再構成されたデータの可視ユニットと隠れユニットの共起を計算
-            neg_associations = np.dot(h.T, neg_hidden_probs)
+            neg_associations = np.dot(neg_visible_probs.T, neg_hidden_probs)
 
             #重みとバイアスを正負のフェーズの差異に基づいて更新
             self.weights += self.learning_rate * ((pos_associations - neg_associations) / len(data))
-            self.visible_bias += self.learning_rate * np.mean(data - v, axis=0)
+            self.visible_bias += self.learning_rate * np.mean(data - neg_visible_probs, axis=0)
             self.hidden_bias += self.learning_rate * np.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
 
             # エラーログ
             #100回のイテレーションごとに元のデータと再構成データとの誤差を計算して表示
-            if iteration % 10 == 0:
+            if iteration % 1000 == 0:
                 error = np.mean((data - neg_visible_probs) ** 2)
                 print(f"Iteration: {iteration}, Error: {error}")
+                vs.append(neg_visible_probs[0])
+                
+        fig, ax = plt.subplots(1, 10)
+        fig.suptitle("annealing", color='black')    
+        for i in range(len(vs)):
+            img = np.reshape(vs[i], (8, 8))
+            ax[i].imshow(img, cmap='Greys')
+        plt.show()
 
     #可視層から隠れ層への変換
     #可視ユニットのデータを入力として、隠れユニットの状態をサンプリングして返す
@@ -137,22 +122,5 @@ class RBM:
 data = np.array(edit_data_list)
 
 # RBMの初期化とトレーニング
-rbm = RBM(n_visible=64, n_hidden=64, learning_rate=0.1, n_iterations=50)
+rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=10000)
 rbm.train(data)
-
-# 再構成のテスト
-sample_data = np.array(data[0])
-reconstructed_data = rbm.reconstruct(sample_data)
-
-redata = reconstructed_data[0]
-
-print("Original Data:", data[0])
-print("Reconstructed Data:", redata)
-    
-list1 = []
-list2 = []
-list1.append(data[0])
-list1.append(redata)
-show_img(row=1, col=2, img_list1=list1, img_list2=None,
-         title_list1="sample_reconstructed", title_list2=None,
-         subtitle="", subtitlesize=24, figsize=(14, 3))

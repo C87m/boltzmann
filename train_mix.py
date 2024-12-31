@@ -32,10 +32,10 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
     plt.show()
     
 # 0 のみのデータセットを取得
-zero_index_list = [i for i, x in enumerate(digits.target) if x == 0]
+zero_index_list = [i for i, x in enumerate(digits.target) ]
 raw_data_list = [digits.data[i] for i in zero_index_list]
 
-num_data = 50 # 使用するデータの数
+num_data = 500 # 使用するデータの数
 num_spin = len(raw_data_list[0]) #画像1枚のスピンの数
 
 # データの加工
@@ -142,7 +142,7 @@ class RBM:
 
             # エラーログ
             #10回のイテレーションごとに元のデータと再構成データとの誤差を計算して表示
-            if iteration % 1 == 0:
+            if iteration % 10 == 0:
                 error = np.mean((data - neg_visible_probs) ** 2)
                 print(f"Iteration: {iteration}, Error: {error}")
 
