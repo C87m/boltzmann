@@ -3,12 +3,9 @@ from pyqubo import Array, Constraint, solve_qubo
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-<<<<<<< HEAD
 import csv
 import pprint
 import gc
-=======
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
 
 from sklearn.datasets import load_digits
 
@@ -24,14 +21,10 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
         if row == 1:
             img1 = np.reshape(img_list1[i], (8, 8))
             ax[i].imshow(img1, cmap='Greys')
-<<<<<<< HEAD
             if i ==0:
                 ax[i].set_title("Original",y=-0.2)
             else:
                 ax[i].set_title("QRBM",y=-0.2)
-=======
-            ax[i].set_title(title_list1[i])
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
         else:
             img1 = np.reshape(img_list1[i], (8, 8))
             ax[0, i].imshow(img1, cmap='Greys')
@@ -44,17 +37,10 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
     plt.show()
     
 # 0 のみのデータセットを取得
-<<<<<<< HEAD
 zero_index_list = [i for i, x in enumerate(digits.target) ]
 raw_data_list = [digits.data[i] for i in zero_index_list]
 
 num_data = 50 # 使用するデータの数
-=======
-zero_index_list = [i for i, x in enumerate(digits.target) if x == 0 or x == 1 ]
-raw_data_list = [digits.data[i] for i in zero_index_list]
-
-num_data = 100 # 使用するデータの数
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
 num_spin = len(raw_data_list[0]) #画像1枚のスピンの数
 
 # データの加工
@@ -78,19 +64,12 @@ class RBM:
         return 1 / (1 + np.exp(-x))
 
     def train(self, data):
-<<<<<<< HEAD
         vs = []
-=======
-        vs =[]
-        #変数の作成
-        x = Array.create('x', shape=(self.n_visible+self.n_hidden), vartype='BINARY')
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
         #期待値の初期化
         pos_hidden_probs = self.sigmoid(np.dot(data, self.weights) + self.hidden_bias)
         pos_associations = np.dot(data.T, pos_hidden_probs)
         
         for iteration in range(self.n_iterations):
-<<<<<<< HEAD
             v_list = []
             h_list = []
             #変数の作成
@@ -123,29 +102,6 @@ class RBM:
             v_arr = np.asarray(v_list)
             h_arr = np.asarray(h_list)
 
-=======
-            
-            #アニーリングの実行
-            #第一項
-            H_A = Constraint(- sum(self.visible_bias[i]*x[i] for i in range(self.n_visible)), label='HA')
-            #第二項
-            H_B = Constraint(- sum(self.hidden_bias[i]*x[i+self.n_visible] for i in range(self.n_hidden)), label='HB')
-            #代三項
-            H_C = - sum(sum(self.weights[i][j]*x[i]*x[j+self.n_visible] for i in range(self.n_visible))for j in range(self.n_hidden))
-            #ハミルトニアン全体を定義
-            Q = H_A + H_B + H_C
-            #モデルをコンパイル
-            model = Q.compile()
-            qubo, offset = model.to_qubo()
-            #SQAを用いる
-            sampler = oj.SQASampler()
-            #QUBOにquboを代入
-            response = sampler.sample_qubo(Q=qubo)
-            #サンプリング結果を代入
-            v = response.states[0][0:self.n_visible]
-            h = response.states[0][self.n_visible:]
-            
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
             # 正のフェーズ
             #可視データから隠れユニットの活性化確率を計算
             pos_hidden_probs = self.sigmoid(np.dot(data, self.weights) + self.hidden_bias)
@@ -154,18 +110,11 @@ class RBM:
 
             # 負のフェーズ
             #隠れユニットの状態から再構成された可視データの確率を計算
-<<<<<<< HEAD
             neg_visible_probs = self.sigmoid(np.dot(h_arr, self.weights.T) + self.visible_bias)
             #バイナリ状態に変換
             neg_visible_probs = (neg_visible_probs > np.random.rand(len(data), self.n_visible)).astype(float)
             #再構成された可視データから隠れユニットの活性化確率を計算
             neg_hidden_probs = self.sigmoid(np.dot(v_arr, self.weights) + self.hidden_bias)
-=======
-            neg_visible_probs = self.sigmoid(np.dot(h, self.weights.T) + self.visible_bias)
-            neg_visible_probs = (neg_visible_probs > np.random.rand(len(data), self.n_visible)).astype(float)
-            #再構成された可視データから隠れユニットの活性化確率を計算
-            neg_hidden_probs = self.sigmoid(np.dot(neg_visible_probs, self.weights) + self.hidden_bias)
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
 
             # 重みとバイアスの更新
             #再構成されたデータの可視ユニットと隠れユニットの共起を計算
@@ -173,7 +122,6 @@ class RBM:
 
             #重みとバイアスを正負のフェーズの差異に基づいて更新
             self.weights += self.learning_rate * ((pos_associations - neg_associations) / len(data))
-<<<<<<< HEAD
             self.visible_bias += self.learning_rate * np.mean(data - v_arr, axis=0)
             self.hidden_bias += self.learning_rate * np.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
 
@@ -183,17 +131,6 @@ class RBM:
                 error = np.mean((data - neg_visible_probs) ** 2)
                 print(f"Iteration: {iteration}, Error: {error}")
                 vs.append(neg_visible_probs[0])
-=======
-            self.visible_bias += self.learning_rate * np.mean(data - neg_visible_probs, axis=0)
-            self.hidden_bias += self.learning_rate * np.mean(pos_hidden_probs - neg_hidden_probs, axis=0)
-
-            # エラーログ
-            #100回のイテレーションごとに元のデータと再構成データとの誤差を計算して表示
-            if iteration % 20 == 0:
-                error = np.mean((data - neg_visible_probs) ** 2)
-                vs.append(neg_visible_probs[0])
-                print(f"Iteration: {iteration}, Error: {error}")
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
                 
         fig, ax = plt.subplots(1, 10)
         fig.suptitle("annealing", color='black')    
@@ -227,11 +164,6 @@ class RBM:
 data = np.array(edit_data_list)
 
 # RBMの初期化とトレーニング
-<<<<<<< HEAD
 rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=50)
 rbm.train(data)
-=======
-rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=200)
-rbm.train(data)
 
->>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
