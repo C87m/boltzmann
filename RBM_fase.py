@@ -29,7 +29,11 @@ def show_img(row, col, img_list1, img_list2, title_list1, title_list2, subtitle,
     plt.show()
     
 # 0 のみのデータセットを取得
+<<<<<<< HEAD
 zero_index_list = [i for i, x in enumerate(digits.target) ]
+=======
+zero_index_list = [i for i, x in enumerate(digits.target) if x == 0 or x == 1]
+>>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
 raw_data_list = [digits.data[i] for i in zero_index_list]
 
 num_data = 100 # 使用するデータの数
@@ -85,7 +89,11 @@ class RBM:
 
             # エラーログ
             #100回のイテレーションごとに元のデータと再構成データとの誤差を計算して表示
+<<<<<<< HEAD
             if iteration % 1000 == 0:
+=======
+            if iteration % 20 == 0:
+>>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
                 error = np.mean((data - neg_visible_probs) ** 2)
                 print(f"Iteration: {iteration}, Error: {error}")
                 vs.append(neg_visible_probs[0])
@@ -122,5 +130,11 @@ class RBM:
 data = np.array(edit_data_list)
 
 # RBMの初期化とトレーニング
+<<<<<<< HEAD
 rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=10000)
 rbm.train(data)
+=======
+rbm = RBM(n_visible=64, n_hidden=20, learning_rate=0.1, n_iterations=200)
+rbm.train(data)
+
+>>>>>>> 771069872235f4fce7ef9d5a152ece715b7444c9
